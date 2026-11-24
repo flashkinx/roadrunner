@@ -24,8 +24,21 @@ pub fn api_key() -> Option<String> {
         let c = &*cred;
         let bytes = std::slice::from_raw_parts(c.CredentialBlob, c.CredentialBlobSize as usize).to_vec();
         CredFree(cred as *const _);
-        String::from_utf8(bytes).ok().filter(|k| !k.is_empty())
+        decode_secret(&bytes).filter(|k| !k.is_empty())
     }
+}
+
+/// Roadrunner schreibt UTF-8, `cmdkey /generic:... /pass:...` schreibt UTF-16LE.
+/// Beides wird gelesen.
+fn decode_secret(bytes: &[u8]) -> Option<String> {
+    let utf16 = bytes.len() >= 2 && bytes.len() % 2 == 0 && bytes.iter().skip(1).step_by(2).all(|b| *b == 0);
+    if utf16 {
+        let units: Vec<u16> = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+        String::from_utf16(&units).ok()
+    } else {
+        String::from_utf8(bytes.to_vec()).ok()
+    }
+    .map(|k| k.trim().to_string())
 }
 
 pub fn set_api_key(key: &str) -> anyhow::Result<()> {
@@ -105,4 +118,16 @@ pub fn copy_text(text: &str) -> Result<(), String> {
     arboard::Clipboard::new()
         .and_then(|mut c| c.set_text(text.to_string()))
         .map_err(|e| format!("Zwischenablage: {e}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::decode_secret;
+
+    #[test]
+    fn reads_utf8_and_utf16() {
+        assert_eq!(decode_secret(b"AIzaTest").as_deref(), Some("AIzaTest"));
+        let wide: Vec<u8> = "AIzaTest".encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
+        assert_eq!(decode_secret(&wide).as_deref(), Some("AIzaTest"));
+    }
 }

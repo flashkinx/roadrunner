@@ -272,6 +272,13 @@ pub fn open_settings(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("settings") {
         let _ = w.show();
         let _ = w.unminimize();
+        // Windows laesst Hintergrundprozesse kein Fenster nach vorne holen
+        // (Foreground Lock). Kurz "topmost" setzen und wieder loesen hebt es an.
+        #[cfg(windows)]
+        {
+            let _ = w.set_always_on_top(true);
+            let _ = w.set_always_on_top(false);
+        }
         let _ = w.set_focus();
     }
 }
