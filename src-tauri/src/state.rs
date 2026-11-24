@@ -198,12 +198,12 @@ pub async fn fetch(app: &AppHandle) -> Result<bool, String> {
     let st = shared(app);
     let cfg = st.cfg();
 
-    let Some(key) = crate::macos::api_key() else {
+    let Some(key) = crate::platform::api_key() else {
         mark(app, Kind::Setup, "Google-API-Key fehlt");
         return Ok(false);
     };
 
-    let here = if cfg.use_location { crate::location::current(app).await } else { None };
+    let here = if cfg.use_location { crate::platform::location::current(app).await } else { None };
     let now = Local::now();
     let today = now.format("%Y-%m-%d").to_string();
     let Some(leg) = direction::decide(&cfg, now.hour() * 60 + now.minute(), &today, here) else {

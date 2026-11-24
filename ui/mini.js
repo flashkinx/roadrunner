@@ -1,3 +1,7 @@
+// Windows erkennen: dort Windows-11-Stil (Segoe UI, Fluent), siehe *.css
+if (/Windows/.test(navigator.userAgent)) document.documentElement.dataset.os = "windows";
+const IS_WIN = document.documentElement.dataset.os === "windows";
+
 // Ampel-Pille (eine Zeile; Ziel und Stand im Tooltip)
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -45,6 +49,8 @@ function render(s) {
 // Größe: das Fenster skaliert Rust, der Inhalt skaliert hier mit
 function applyScale(cfg) {
   document.body.style.zoom = cfg.pillScale || 1;
+  // macOS setzt die Deckkraft am Fenster, Windows hier am Inhalt
+  if (IS_WIN) document.documentElement.style.opacity = cfg.pillOpacity || 1;
   document.body.dataset.dur = cfg.showDuration === false ? "0" : "1";
   document.body.dataset.arr = cfg.showArrival ? "1" : "0";
 }

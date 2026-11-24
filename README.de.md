@@ -1,6 +1,6 @@
 # Roadrunner
 
-**Die Fahrzeit-Ampel für macOS.** Roadrunner zeigt, wie lange die Fahrt
+**Die Fahrzeit-Ampel für macOS und Windows.** Roadrunner zeigt, wie lange die Fahrt
 zwischen Zuhause und Arbeit gerade dauert, mit aktuellem Verkehr, als kleine
 schwebende Pille und in der Menüleiste. Grün, Gelb oder Rot auf einen Blick,
 mit selbst gesetzten Schwellen.
@@ -33,7 +33,8 @@ mit selbst gesetzten Schwellen.
 - **Größe, Deckkraft und Hell/Dunkel** der Pille einstellbar.
 - **Menüleiste** mit farbigem Punkt und Minuten.
 - **API-Key im macOS-Schlüsselbund**, nie in einer Datei.
-- Geschrieben in **Rust** mit [Tauri 2](https://tauri.app). Rund 7 MB.
+- Geschrieben in **Rust** mit [Tauri 2](https://tauri.app). Rund 7 MB. Eine Codebasis
+  für macOS und Windows 11 (unter Windows im Windows-11-Stil).
 
 ## Screenshots
 
@@ -57,19 +58,40 @@ Varianten der Pille (nur Ampel, Fahrzeit, Ankunftszeit, beides):
 
 ## Voraussetzungen
 
-- macOS 12 oder neuer (getestet auf Apple Silicon)
+- macOS 12 oder neuer (getestet auf Apple Silicon) oder Windows 10/11 (x64 oder ARM64)
 - Ein Google-Cloud-Projekt mit Abrechnungskonto und einem Key für die
   **Routes API** und die **Places API (New)** (siehe unten)
 - Zum Bauen: [Rust](https://rustup.rs) und die Tauri-CLI
 
 ## Installation
 
-Einen signierten Download gibt es noch nicht. Ein Mac-Programm ohne Signatur
-und Prüfung über ein Apple-Entwicklerkonto blockiert macOS beim Herunterladen.
-Deshalb baust du es vorerst selbst, das dauert ein paar Minuten:
+### Download
+
+Fertige Pakete hängen an jedem
+[Release](https://github.com/flashkinx/roadrunner/releases):
+
+| System | Datei |
+|---|---|
+| macOS (Apple Silicon und Intel) | `Roadrunner_<version>_universal.dmg` |
+| Windows x64 | `Roadrunner_<version>_x64-setup.exe` |
+| Windows ARM64 (z.B. Parallels auf Apple Silicon, Snapdragon-Laptops) | `Roadrunner_<version>_arm64-setup.exe` |
+
+Die Pakete sind **nicht** mit einem kostenpflichtigen Zertifikat signiert,
+deshalb warnen beide Systeme einmal:
+
+- **macOS:** DMG öffnen, Roadrunner in "Programme" ziehen. Beim ersten Start
+  verweigert macOS das Öffnen. Unter Systemeinstellungen → Datenschutz &
+  Sicherheit auf "Dennoch öffnen" klicken, oder
+  `xattr -dr com.apple.quarantine /Applications/Roadrunner.app` ausführen.
+- **Windows:** SmartScreen meldet "Der Computer wurde durch Windows geschützt".
+  "Weitere Informationen" → "Trotzdem ausführen". Installiert wird nur für den
+  aktuellen Benutzer, ohne Administratorrechte.
+
+### Selbst bauen
 
 ```sh
-# 1. Rust (falls noch nicht da)
+# 1. Rust (falls noch nicht da). Unter Windows zusätzlich die Visual Studio
+#    Build Tools mit "Desktopentwicklung mit C++".
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # 2. Tauri-CLI
@@ -80,13 +102,24 @@ git clone https://github.com/flashkinx/roadrunner.git
 cd roadrunner/src-tauri
 cargo tauri build
 
-# 4. Installieren
+# 4. Installieren (macOS)
 cp -R target/release/bundle/macos/Roadrunner.app /Applications/
 open -a Roadrunner
+# Windows: target\release\bundle\nsis\Roadrunner_*-setup.exe ausführen
 ```
 
 Beim ersten Start öffnen sich die Einstellungen auf der Seite **Allgemein**,
 die Anleitung ist schon aufgeklappt.
+
+### Unterschiede macOS und Windows
+
+| | macOS | Windows |
+|---|---|---|
+| Neben dem Symbol in Menüleiste/Infobereich | farbiger Punkt plus Minuten als Text | Minuten im farbigen Symbol (Windows kann dort keinen Text zeigen) |
+| Optik | macOS-Glas (Vibrancy) | Windows-11-Mica und Fluent-Bedienelemente |
+| API-Key | Schlüsselbund | Anmeldeinformationsverwaltung (Windows-Anmeldeinformationen, generisch) |
+| Standort | Ortungsdienste | Windows-Standortdienst (Einstellungen → Datenschutz und Sicherheit → Standort) |
+| Über Vollbild-Apps | ja, als nicht aktivierendes Panel | ja bei randlosem Vollbild, nicht bei exklusiven Vollbild-Spielen |
 
 ## Google-API-Key
 
@@ -145,8 +178,10 @@ wird nur als Startpunkt in der Anfrage an Google verwendet.
 ## Datenschutz
 
 - Der API-Key liegt im macOS-Schlüsselbund (Dienst
-  `io.github.flashkinx.roadrunner`).
-- Einstellungen: `~/Library/Application Support/io.github.flashkinx.roadrunner/config.json`.
+  `io.github.flashkinx.roadrunner`) bzw. in der Windows-Anmeldeinformations-
+  verwaltung (Ziel `io.github.flashkinx.roadrunner/google-api-key`).
+- Einstellungen: `~/Library/Application Support/io.github.flashkinx.roadrunner/config.json`
+  am Mac, `%APPDATA%\io.github.flashkinx.roadrunner\config.json` unter Windows.
 - Netzwerkanfragen gehen nur an Google (Routes API, Places API). Keine
   Statistik, keine anderen Server.
 

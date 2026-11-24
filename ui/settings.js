@@ -1,3 +1,7 @@
+// Windows erkennen: dort Windows-11-Stil (Segoe UI, Fluent), siehe *.css
+if (/Windows/.test(navigator.userAgent)) document.documentElement.dataset.os = "windows";
+const IS_WIN = document.documentElement.dataset.os === "windows";
+
 // Einstellungen: speichert jede Aenderung sofort (wie die macOS-Systemeinstellungen).
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -210,7 +214,9 @@ document.querySelectorAll("[data-here]").forEach((b) =>
     const which = b.dataset.here;
     const p = await invoke("current_location");
     if (!p) {
-      toast("Kein Standort verfügbar. Ortungsdienste für Roadrunner in den Systemeinstellungen erlauben und kurz warten.");
+      toast(IS_WIN
+        ? "Kein Standort verfügbar. Standortzugriff in den Windows-Einstellungen erlauben und kurz warten."
+        : "Kein Standort verfügbar. Ortungsdienste für Roadrunner in den Systemeinstellungen erlauben und kurz warten.");
       return;
     }
     cfg[which] = { ...p, label: `Standort ${p.label}` };
@@ -229,7 +235,9 @@ async function refreshLocState() {
   el.textContent = {
     granted: "An: Richtung und Start nach aktuellem Standort",
     notDetermined: "Wartet auf Freigabe durch macOS …",
-    denied: "Verweigert: in Systemeinstellungen › Datenschutz › Ortungsdienste erlauben",
+    denied: IS_WIN
+      ? "Verweigert: in Einstellungen › Datenschutz und Sicherheit › Standort erlauben"
+      : "Verweigert: in Systemeinstellungen › Datenschutz › Ortungsdienste erlauben",
     off: "Wird gestartet …",
   }[p];
 }
@@ -376,7 +384,7 @@ $("autostart").addEventListener("change", (e) => { cfg.autostart = e.target.chec
 
 async function refreshKeyState() {
   const has = await invoke("has_api_key");
-  $("key-state").textContent = has ? "Im Schlüsselbund hinterlegt." : "Noch kein Key hinterlegt.";
+  $("key-state").textContent = has ? (IS_WIN ? "Sicher gespeichert (Windows-Anmeldeinformationen)." : "Im Schlüsselbund hinterlegt.") : "Noch kein Key hinterlegt.";
 }
 $("btn-key").addEventListener("click", async () => {
   try {

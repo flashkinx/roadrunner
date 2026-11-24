@@ -1,6 +1,6 @@
 # Roadrunner
 
-**A live commute traffic light for macOS.** Roadrunner shows how long the drive
+**A live commute traffic light for macOS and Windows.** Roadrunner shows how long the drive
 between home and work takes right now, including traffic, as a small floating
 pill and in the menu bar. Green, yellow or red at a glance, with your own
 thresholds.
@@ -36,7 +36,8 @@ thresholds.
 - **Size, opacity and light/dark appearance** of the pill are adjustable.
 - **Menu bar item** with a colored dot and the minutes.
 - **API key stored in the macOS Keychain**, never in a file.
-- Written in **Rust** with [Tauri 2](https://tauri.app). About 7 MB.
+- Written in **Rust** with [Tauri 2](https://tauri.app). About 7 MB. One code base for
+  macOS and Windows 11 (with a native Windows 11 look).
 
 ## Screenshots
 
@@ -60,19 +61,39 @@ Pill variants (traffic light only, drive time, arrival time, both):
 
 ## Requirements
 
-- macOS 12 or newer (tested on Apple Silicon)
+- macOS 12 or newer (tested on Apple Silicon), or Windows 10/11 (x64 or ARM64)
 - A Google Cloud project with billing enabled and a key for the **Routes API**
   and the **Places API (New)** (see below)
 - To build: [Rust](https://rustup.rs) and the Tauri CLI
 
 ## Installation
 
-There is no signed download yet. A Mac app that is not signed and notarized
-with an Apple Developer ID is blocked by Gatekeeper when downloaded, so for now
-you build it yourself. It takes a few minutes:
+### Download
+
+Ready-made packages are attached to each
+[release](https://github.com/flashkinx/roadrunner/releases):
+
+| System | File |
+|---|---|
+| macOS (Apple Silicon and Intel) | `Roadrunner_<version>_universal.dmg` |
+| Windows x64 | `Roadrunner_<version>_x64-setup.exe` |
+| Windows ARM64 (e.g. Parallels on Apple Silicon, Snapdragon laptops) | `Roadrunner_<version>_arm64-setup.exe` |
+
+The packages are **not signed** with a paid certificate, so both systems warn
+once:
+
+- **macOS:** open the DMG and drag Roadrunner to Applications. On first start
+  macOS refuses to open it. Go to System Settings → Privacy & Security and click
+  "Open Anyway", or run `xattr -dr com.apple.quarantine /Applications/Roadrunner.app`.
+- **Windows:** SmartScreen shows "Windows protected your PC". Click "More info"
+  → "Run anyway". The installer installs for the current user only, no admin
+  rights needed.
+
+### Build from source
 
 ```sh
-# 1. Rust (skip if installed)
+# 1. Rust (skip if installed). Windows also needs the Visual Studio Build Tools
+#    with "Desktop development with C++".
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # 2. Tauri CLI
@@ -83,13 +104,24 @@ git clone https://github.com/flashkinx/roadrunner.git
 cd roadrunner/src-tauri
 cargo tauri build
 
-# 4. Install
+# 4. Install (macOS)
 cp -R target/release/bundle/macos/Roadrunner.app /Applications/
 open -a Roadrunner
+# Windows: run target\release\bundle\nsis\Roadrunner_*-setup.exe
 ```
 
 On first start the settings window opens on the **General** page with the
 guide expanded.
+
+### macOS and Windows differences
+
+| | macOS | Windows |
+|---|---|---|
+| Next to the tray/menu bar icon | colored dot plus minutes as text | minutes drawn into the colored icon (Windows cannot show text there) |
+| Look | macOS glass (vibrancy) | Windows 11 Mica and Fluent controls |
+| API key | Keychain | Credential Manager (Windows credentials, generic) |
+| Location | Location Services | Windows location service (Settings → Privacy & security → Location) |
+| On top of full-screen apps | yes, as a non-activating panel | yes for borderless full screen, not for exclusive full-screen games |
 
 ## Google API key
 
@@ -147,8 +179,10 @@ and is only used as the route origin in the request to Google.
 ## Privacy
 
 - The API key lives in the macOS Keychain (service
-  `io.github.flashkinx.roadrunner`).
-- Settings: `~/Library/Application Support/io.github.flashkinx.roadrunner/config.json`.
+  `io.github.flashkinx.roadrunner`) or the Windows Credential Manager (target
+  `io.github.flashkinx.roadrunner/google-api-key`).
+- Settings: `~/Library/Application Support/io.github.flashkinx.roadrunner/config.json`
+  on macOS, `%APPDATA%\io.github.flashkinx.roadrunner\config.json` on Windows.
 - Network requests go only to Google (Routes API, Places API). No analytics,
   no other servers.
 
@@ -187,11 +221,12 @@ Project layout:
 | `src-tauri/src/ampel.rs` | minutes → color |
 | `src-tauri/src/direction.rs` | direction, origin and destination |
 | `src-tauri/src/google.rs` | Routes API, Places API, coordinate parser |
-| `src-tauri/src/location.rs` | CoreLocation |
-| `src-tauri/src/macos.rs` | Keychain, lock screen, panel/window level |
+| `src-tauri/src/platform/` | per-OS parts: `mac.rs`, `win.rs` (secret storage, lock screen, window behavior, browser, clipboard), `mac_location.rs`, `win_location.rs` |
 | `src-tauri/src/scheduler.rs` | refresh loop |
 | `src-tauri/src/state.rs` | shared state, status distribution |
-| `src-tauri/src/ui.rs` | menu bar, menus, pill size |
+| `src-tauri/src/ui.rs` | menu bar/tray, menus, pill size, Windows tray icon with minutes |
+| `src-tauri/tauri.windows.conf.json` | Windows window and installer settings |
+| `.github/workflows/` | tests on macOS and Windows, release builds on `v*` tags |
 | `ui/` | pill and settings (plain HTML/CSS/JS, no bundler) |
 | `tools/windows.swift` | lists Roadrunner's window IDs for `screencapture -l` |
 

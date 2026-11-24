@@ -5,7 +5,6 @@
 
 use objc2::rc::Retained;
 use objc2_core_location::{kCLLocationAccuracyHundredMeters, CLAuthorizationStatus, CLLocationManager};
-use serde::Serialize;
 use std::cell::RefCell;
 use tauri::AppHandle;
 
@@ -16,14 +15,7 @@ thread_local! {
 /// Positionen aelter als das gelten als unbekannt.
 const MAX_AGE_S: f64 = 30.0 * 60.0;
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub enum Permission {
-    NotDetermined,
-    Denied,
-    Granted,
-    Off,
-}
+pub use super::Permission;
 
 /// Manager anlegen und Berechtigung anfragen. Mehrfachaufruf ist harmlos.
 pub fn start(app: &AppHandle) {

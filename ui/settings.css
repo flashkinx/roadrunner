@@ -404,3 +404,100 @@ input[type="checkbox"].box { margin: 0; accent-color: var(--accent); }
   border-radius: 8px;
   box-shadow: inset 0 0 0 0.5px var(--line);
 }
+
+/* ---------- Plattformtexte ---------- */
+.win-only { display: none; }
+html[data-os="windows"] .win-only { display: inline; }
+html[data-os="windows"] .mac-only { display: none; }
+
+/* ---------- Windows 11 (Fluent) -------------------------------------------
+   Seitenleiste auf Mica (Fenstereffekt), Inhalt als halbdeckende Ebene darueber,
+   normale Windows-Titelleiste, eckigere Bedienelemente. */
+html[data-os="windows"] {
+  --bg: rgba(249, 249, 249, 0.82);
+  --group: rgba(255, 255, 255, 0.78);
+  --line: rgba(0, 0, 0, 0.07);
+  --field: #ffffff;
+  --field-line: rgba(0, 0, 0, 0.16);
+  --accent: #005fb8;
+  --sel: rgba(0, 0, 0, 0.055);
+  --seg-on: #ffffff;
+  --off: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-os="windows"] {
+    --bg: rgba(39, 39, 39, 0.78);
+    --group: rgba(255, 255, 255, 0.055);
+    --line: rgba(255, 255, 255, 0.07);
+    --field: rgba(255, 255, 255, 0.06);
+    --field-line: rgba(255, 255, 255, 0.12);
+    --accent: #60cdff;
+    --sel: rgba(255, 255, 255, 0.07);
+    --seg-on: rgba(255, 255, 255, 0.1);
+  }
+}
+html[data-os="windows"] body {
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+html[data-os="windows"] .drag { height: 12px; }
+html[data-os="windows"] .titlebar { height: 56px; }
+html[data-os="windows"] h1 {
+  font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+}
+html[data-os="windows"] .content { border-left: 0; border-top-left-radius: 8px; }
+html[data-os="windows"] .nav { position: relative; padding: 8px 10px; border-radius: 4px; }
+html[data-os="windows"] .nav.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+html[data-os="windows"] .ic { border-radius: 4px; }
+html[data-os="windows"] .group,
+html[data-os="windows"] .guide,
+html[data-os="windows"] .hero { border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
+html[data-os="windows"] .row { min-height: 48px; padding: 10px 16px; }
+html[data-os="windows"] .text { height: 32px; border-radius: 4px; border-width: 1px; border-bottom-color: rgba(0, 0, 0, 0.35); }
+html[data-os="windows"] .text:focus { box-shadow: none; border-bottom: 2px solid var(--accent); }
+html[data-os="windows"] .btn { height: 32px; border-radius: 4px; padding: 0 14px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
+html[data-os="windows"] .btn.small { height: 28px; font-size: 13px; }
+html[data-os="windows"] .seg { border-radius: 4px; }
+html[data-os="windows"] .seg button { border-radius: 3px; padding: 4px 12px; font-size: 13px; }
+/* Fluent-Schalter: aus = Rahmen mit dunklem Knopf, an = Akzent mit weissem Knopf */
+html[data-os="windows"] .switch {
+  width: 40px;
+  height: 20px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+html[data-os="windows"] .switch::after {
+  top: 4px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.62);
+  box-shadow: none;
+}
+html[data-os="windows"] .switch:checked { box-shadow: none; }
+html[data-os="windows"] .switch:checked::after { transform: translateX(20px); background: #fff; }
+@media (prefers-color-scheme: dark) {
+  html[data-os="windows"] .switch { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6); }
+  html[data-os="windows"] .switch::after { background: rgba(255, 255, 255, 0.78); }
+  html[data-os="windows"] .switch:checked::after { background: #000; }
+  html[data-os="windows"] .text { border-bottom-color: rgba(255, 255, 255, 0.4); }
+}
+html[data-os="windows"] .slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, var(--accent) 0 5px, #fff 6px);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+html[data-os="windows"] .slider { background: rgba(128, 128, 128, 0.5); }
+html[data-os="windows"] .prompt { font-family: "Cascadia Mono", Consolas, monospace; }

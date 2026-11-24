@@ -52,6 +52,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn tray_icon_with_minutes() {
+        let blank = dot_with_minutes(Color::Green, None);
+        let with = dot_with_minutes(Color::Green, Some(52));
+        assert_eq!((with.width(), with.height()), (32, 32));
+        let white = |img: &Image| img.rgba().chunks(4).filter(|p| p == &[255, 255, 255, 255]).count();
+        assert_eq!(white(&blank), 0);
+        assert!(white(&with) > 40, "Ziffern fehlen");
+        // auf Gelb dunkle Schrift
+        let y = dot_with_minutes(Color::Yellow, Some(7));
+        assert!(y.rgba().chunks(4).any(|p| p == [28, 28, 30, 255]));
+        // ab 100 Minuten "99+" statt Ueberlauf
+        let big = dot_with_minutes(Color::Red, Some(123));
+        assert!(white(&big) > white(&dot_with_minutes(Color::Red, Some(99))));
+    }
+
+    #[test]
     fn widths_follow_options() {
         let mut c = crate::config::Config::default();
         assert_eq!(mini_width(&c), 104.0);
@@ -83,6 +99,87 @@ fn dot(color: Color) -> Image<'static> {
         }
     }
     Image::new_owned(px, S as u32, S as u32)
+}
+
+/// 5x7-Pixelschrift fuer Ziffern (je Zeile 5 Bit, linkes Pixel = Bit 4).
+const DIGITS: [[u8; 7]; 10] = [
+    [0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E],
+    [0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E],
+    [0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F],
+    [0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E],
+    [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02],
+    [0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E],
+    [0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E],
+    [0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08],
+    [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E],
+    [0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C],
+];
+
+/// Taskleisten-Symbol fuer Windows (32 x 32): Kreis in Ampelfarbe mit den
+/// Minuten darin, weil Windows neben dem Symbol keinen Text zeigen kann.
+#[cfg_attr(not(windows), allow(dead_code))]
+fn dot_with_minutes(color: Color, minutes: Option<i64>) -> Image<'static> {
+    const S: usize = 32;
+    let [r, g, b] = color.rgb();
+    let c = (S as f32 - 1.0) / 2.0;
+    let mut px = vec![0u8; S * S * 4];
+    for y in 0..S {
+        for x in 0..S {
+            let d = ((x as f32 - c).powi(2) + (y as f32 - c).powi(2)).sqrt();
+            let a = (15.5 - d + 0.5).clamp(0.0, 1.0);
+            let i = (y * S + x) * 4;
+            px[i..i + 4].copy_from_slice(&[r, g, b, (a * 255.0) as u8]);
+        }
+    }
+    let Some(m) = minutes else { return Image::new_owned(px, S as u32, S as u32) };
+    let ink: [u8; 3] = if color == Color::Yellow { [28, 28, 30] } else { [255, 255, 255] };
+    let shown = m.clamp(0, 99) as usize;
+    let digits: Vec<usize> = if shown >= 10 { vec![shown / 10, shown % 10] } else { vec![shown] };
+    // Ziffern doppelt gross (10 x 14), 2 px Abstand, mittig
+    let width = digits.len() * 10 + (digits.len() - 1) * 2 + if m > 99 { 4 } else { 0 };
+    let x0 = (S - width) / 2;
+    let y0 = (S - 14) / 2;
+    let mut set = |x: usize, y: usize| {
+        if x < S && y < S {
+            let i = (y * S + x) * 4;
+            px[i..i + 4].copy_from_slice(&[ink[0], ink[1], ink[2], 255]);
+        }
+    };
+    for (n, d) in digits.iter().enumerate() {
+        let ox = x0 + n * 12;
+        for (row, bits) in DIGITS[*d].iter().enumerate() {
+            for col in 0..5 {
+                if bits & (0x10 >> col) != 0 {
+                    for (dx, dy) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+                        set(ox + col * 2 + dx, y0 + row * 2 + dy);
+                    }
+                }
+            }
+        }
+    }
+    if m > 99 {
+        // kleines Plus oben rechts: "99+"
+        let ox = x0 + digits.len() * 12;
+        for k in 0..3 {
+            set(ox + k, y0 + 1);
+            set(ox + 1, y0 + k);
+        }
+    }
+    Image::new_owned(px, S as u32, S as u32)
+}
+
+/// Symbol je Plattform: macOS Punkt (Minuten stehen als Text daneben),
+/// Windows Punkt mit Minuten darin.
+fn tray_icon(s: &Status) -> Image<'static> {
+    #[cfg(windows)]
+    {
+        let m = if s.kind == Kind::Setup { None } else { s.minutes };
+        dot_with_minutes(s.color, m)
+    }
+    #[cfg(not(windows))]
+    {
+        dot(s.color)
+    }
 }
 
 fn tray_title(s: &Status) -> String {
@@ -163,7 +260,7 @@ pub fn build_tray(app: &AppHandle) -> tauri::Result<()> {
 
 pub fn update_tray(app: &AppHandle, s: &Status) {
     let Some(tray) = app.tray_by_id(TRAY_ID) else { return };
-    let _ = tray.set_icon(Some(dot(s.color)));
+    let _ = tray.set_icon(Some(tray_icon(s)));
     let _ = tray.set_title(Some(tray_title(s)));
     let _ = tray.set_tooltip(Some(summary(s)));
     if let Ok(menu) = build_menu(app) {
@@ -193,18 +290,22 @@ pub fn apply_mini(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("mini") {
         let _ = w.set_theme(theme);
         let _ = w.set_always_on_top(cfg.always_on_top);
-        crate::macos::set_level(&w, cfg.always_on_top);
-        crate::macos::set_alpha(&w, cfg.pill_opacity);
+        crate::platform::set_level(&w, cfg.always_on_top);
+        crate::platform::set_alpha(&w, cfg.pill_opacity);
         resize_mini_anchored(&w, &cfg);
-        let s = cfg.pill_scale;
-        // Popover-Glas folgt hell/dunkel, HudWindow waere immer dunkel
-        let _ = w.set_effects(
-            tauri::window::EffectsBuilder::new()
-                .effect(tauri::window::Effect::Popover)
-                .state(tauri::window::EffectState::Active)
-                .radius(MINI_H * s / 2.0)
-                .build(),
-        );
+        // macOS: Popover-Glas folgt hell/dunkel (HudWindow waere immer dunkel).
+        // Windows: die Pille malt ihren Hintergrund im CSS selbst.
+        #[cfg(target_os = "macos")]
+        {
+            let s = cfg.pill_scale;
+            let _ = w.set_effects(
+                tauri::window::EffectsBuilder::new()
+                    .effect(tauri::window::Effect::Popover)
+                    .state(tauri::window::EffectState::Active)
+                    .radius(MINI_H * s / 2.0)
+                    .build(),
+            );
+        }
         if cfg.show_mini {
             let _ = w.show();
         } else {

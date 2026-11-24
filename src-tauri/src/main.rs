@@ -4,14 +4,14 @@ mod ampel;
 mod config;
 mod direction;
 mod google;
-mod location;
-mod macos;
+mod platform;
 mod probe;
 mod scheduler;
 mod state;
 mod ui;
 
 use config::{Config, Direction, Place};
+use platform::location;
 use google::Suggestion;
 use state::{Shared, Status};
 use std::sync::Arc;
@@ -79,19 +79,19 @@ fn set_direction(app: AppHandle, mode: String) {
 
 #[tauri::command]
 fn has_api_key() -> bool {
-    macos::api_key().is_some()
+    platform::api_key().is_some()
 }
 
 #[tauri::command]
 fn set_api_key(app: AppHandle, key: String) -> CmdResult<()> {
-    macos::set_api_key(&key).map_err(|e| format!("Schlüsselbund: {e}"))?;
+    platform::set_api_key(&key).map_err(|e| format!("Sicherer Speicher: {e}"))?;
     state::shared(&app).kick();
     Ok(())
 }
 
 #[tauri::command]
 async fn autocomplete(app: AppHandle, input: String, session: String) -> CmdResult<Vec<Suggestion>> {
-    let key = macos::api_key().ok_or("Zuerst den Google-API-Key hinterlegen")?;
+    let key = platform::api_key().ok_or("Zuerst den Google-API-Key hinterlegen")?;
     let st = state::shared(&app);
     let cfg = st.cfg();
     let bias = cfg.home.as_ref().map(|p| (p.lat, p.lng)).unwrap_or((48.2082, 16.3738));
@@ -102,7 +102,7 @@ async fn autocomplete(app: AppHandle, input: String, session: String) -> CmdResu
 
 #[tauri::command]
 async fn place_details(app: AppHandle, place_id: String, session: String) -> CmdResult<Place> {
-    let key = macos::api_key().ok_or("Zuerst den Google-API-Key hinterlegen")?;
+    let key = platform::api_key().ok_or("Zuerst den Google-API-Key hinterlegen")?;
     let st = state::shared(&app);
     google::place_details(&st.http, &key, &place_id, &session)
         .await
@@ -135,29 +135,13 @@ fn open_url(url: String) -> CmdResult<()> {
     if !ALLOWED.iter().any(|p| url.starts_with(p)) || url.contains(char::is_whitespace) {
         return Err("Adresse nicht erlaubt".into());
     }
-    std::process::Command::new("/usr/bin/open")
-        .arg(&url)
-        .spawn()
-        .map_err(|e| format!("Browser: {e}"))?;
-    Ok(())
+    platform::open_url(&url)
 }
 
 /// Text in die Zwischenablage (pbcopy), fuer den Claude-Auftrag in der Anleitung.
 #[tauri::command]
 fn copy_text(text: String) -> CmdResult<()> {
-    use std::io::Write;
-    let mut child = std::process::Command::new("/usr/bin/pbcopy")
-        .stdin(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| e.to_string())?;
-    child
-        .stdin
-        .take()
-        .ok_or("Zwischenablage nicht erreichbar")?
-        .write_all(text.as_bytes())
-        .map_err(|e| e.to_string())?;
-    child.wait().map_err(|e| e.to_string())?;
-    Ok(())
+    platform::copy_text(&text)
 }
 
 #[tauri::command]
@@ -202,14 +186,14 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             let y = 44.0 * scale;
             let _ = mini.set_position(PhysicalPosition::new(x as i32, y as i32));
         }
-        macos::make_overlay(&mini);
+        platform::make_overlay(&mini);
     }
     ui::apply_mini(&handle);
 
     if cfg.use_location {
         location::start(&handle);
     }
-    if cfg.home.is_none() || cfg.work.is_none() || macos::api_key().is_none() {
+    if cfg.home.is_none() || cfg.work.is_none() || platform::api_key().is_none() {
         ui::open_settings(&handle);
     }
 

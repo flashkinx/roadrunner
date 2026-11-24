@@ -20,7 +20,7 @@ pub async fn run(app: AppHandle) {
     loop {
         let now = Local::now();
         let cfg = st.cfg();
-        let locked = crate::macos::screen_locked();
+        let locked = crate::platform::screen_locked();
         let active = cfg.in_window(now.naive_local());
         let force = st.force.swap(false, Ordering::SeqCst);
 

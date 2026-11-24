@@ -22,7 +22,7 @@ fn coord(s: &str, label: &str) -> Option<Place> {
 pub fn run(args: &[String]) -> i32 {
     let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("Runtime");
     rt.block_on(async {
-        let Some(key) = crate::macos::api_key() else {
+        let Some(key) = crate::platform::api_key() else {
             eprintln!("Kein API-Key (Schlüsselbund oder ROADRUNNER_API_KEY).");
             return 2;
         };

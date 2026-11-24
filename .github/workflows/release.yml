@@ -1,0 +1,63 @@
+name: Release
+
+# Ein Tag wie v0.2.0 baut alle Pakete und haengt sie an ein GitHub-Release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (universal)
+            runner: macos-latest
+            args: --target universal-apple-darwin --bundles app,dmg
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            files: |
+              src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          - name: Windows x64
+            runner: windows-latest
+            args: --bundles nsis
+            rust_targets: x86_64-pc-windows-msvc
+            files: |
+              src-tauri/target/release/bundle/nsis/*-setup.exe
+          - name: Windows ARM64
+            runner: windows-11-arm
+            args: --bundles nsis
+            rust_targets: aarch64-pc-windows-msvc
+            files: |
+              src-tauri/target/release/bundle/nsis/*-setup.exe
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.runner }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bauen
+        run: npx --yes @tauri-apps/cli@2 build ${{ matrix.args }}
+      - name: An Release haengen
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.files }}
+          generate_release_notes: true
+      - name: Als Artefakt ablegen (Handstart)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadrunner-${{ matrix.runner }}
+          path: ${{ matrix.files }}

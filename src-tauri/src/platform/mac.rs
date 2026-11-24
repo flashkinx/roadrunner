@@ -1,14 +1,11 @@
-//! macOS-spezifisches: Schluesselbund, Sperrbildschirm, Fensterverhalten.
+//! macOS: Schluesselbund, Sperrbildschirm, Fensterverhalten, Browser, Zwischenablage.
 
-const SERVICE: &str = "io.github.flashkinx.roadrunner";
-const ACCOUNT: &str = "google-api-key";
+use super::{key_from_env, SECRET_ACCOUNT as ACCOUNT, SECRET_SERVICE as SERVICE};
 
 /// API-Key: Umgebungsvariable ROADRUNNER_API_KEY (fuer Tests) vor Schluesselbund.
 pub fn api_key() -> Option<String> {
-    if let Ok(k) = std::env::var("ROADRUNNER_API_KEY") {
-        if !k.trim().is_empty() {
-            return Some(k.trim().to_string());
-        }
+    if let Some(k) = key_from_env() {
+        return Some(k);
     }
     security_framework::passwords::get_generic_password(SERVICE, ACCOUNT)
         .ok()
@@ -119,4 +116,30 @@ pub fn set_alpha(window: &tauri::WebviewWindow, alpha: f64) {
         let ns: &NSWindow = unsafe { &*(ptr as *const NSWindow) };
         ns.setAlphaValue(alpha.clamp(0.3, 1.0));
     });
+}
+
+/// Link im Standardbrowser oeffnen.
+pub fn open_url(url: &str) -> Result<(), String> {
+    std::process::Command::new("/usr/bin/open")
+        .arg(url)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("Browser: {e}"))
+}
+
+/// Text in die Zwischenablage (pbcopy).
+pub fn copy_text(text: &str) -> Result<(), String> {
+    use std::io::Write;
+    let mut child = std::process::Command::new("/usr/bin/pbcopy")
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    child
+        .stdin
+        .take()
+        .ok_or("Zwischenablage nicht erreichbar")?
+        .write_all(text.as_bytes())
+        .map_err(|e| e.to_string())?;
+    child.wait().map_err(|e| e.to_string())?;
+    Ok(())
 }

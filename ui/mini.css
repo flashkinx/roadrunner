@@ -120,3 +120,24 @@ body[data-dur="0"][data-arr="0"] .dot { width: 14px; height: 14px; margin: 0; }
 .pill[data-kind="paused"] .clock,
 .pill[data-kind="stale"] .clock { opacity: .55; }
 .dur .unit { align-self: auto; margin: 0; }
+
+/* ---------- Windows 11 ---------------------------------------------------
+   Kein Glas vom System: die Pille malt Hintergrund und Rand selbst. */
+html[data-os="windows"] body {
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+}
+html[data-os="windows"] .pill {
+  background: rgba(249, 249, 249, 0.96);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+html[data-os="windows"] .min,
+html[data-os="windows"] .clock {
+  font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-os="windows"] .pill {
+    background: rgba(44, 44, 44, 0.96);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
