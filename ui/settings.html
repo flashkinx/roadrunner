@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Roadrunner</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="drag" data-tauri-drag-region></div>
+    <a class="nav active" data-page="status"><span class="ic" style="--ic:#34c759">●</span>Übersicht</a>
+    <a class="nav" data-page="route"><span class="ic" style="--ic:#0a84ff">⌖</span>Route</a>
+    <a class="nav" data-page="ampel"><span class="ic" style="--ic:#ff9f0a">◐</span>Ampel</a>
+    <a class="nav" data-page="refresh"><span class="ic" style="--ic:#5e5ce6">↻</span>Aktualisierung</a>
+    <a class="nav" data-page="general"><span class="ic" style="--ic:#8e8e93">⚙</span>Allgemein</a>
+  </nav>
+
+  <main class="content">
+    <header class="titlebar" data-tauri-drag-region><h1 id="page-title" data-tauri-drag-region>Übersicht</h1></header>
+
+    <!-- Übersicht -->
+    <section class="page active" id="page-status">
+      <div class="hero" id="hero" data-color="grey">
+        <div class="lights">
+          <span class="light red"></span><span class="light yellow"></span><span class="light green"></span>
+        </div>
+        <div class="hero-text">
+          <div class="hero-min"><span id="h-min">–</span><small>min</small></div>
+          <div class="hero-route" id="h-route">Noch kein Wert</div>
+          <div class="hero-meta" id="h-meta"></div>
+        </div>
+        <button class="btn" id="btn-refresh">Jetzt aktualisieren</button>
+      </div>
+
+      <div class="group">
+        <div class="row">
+          <label>Richtung</label>
+          <div class="seg" id="seg-dir">
+            <button data-v="auto">Automatisch</button>
+            <button data-v="toWork" id="seg-work">Zur Firma</button>
+            <button data-v="toHome" id="seg-home">Nach Hause</button>
+          </div>
+        </div>
+      </div>
+      <p class="foot">Eine feste Richtung gilt nur für heute, ab Mitternacht wählt die App wieder selbst.</p>
+
+      <div class="group">
+        <div class="row"><label>Abfragen diesen Monat</label><span class="val" id="usage"></span></div>
+      </div>
+    </section>
+
+    <!-- Route -->
+    <section class="page" id="page-route">
+      <h2>Adressen</h2>
+      <div class="group" id="grp-home">
+        <div class="row"><label>Name</label><input class="text short" id="home-name" maxlength="24"></div>
+        <div class="row stack">
+          <label>Adresse oder Koordinaten</label>
+          <div class="ac">
+            <input class="text" id="home-addr" placeholder="Adresse suchen oder 48.2085, 16.3731 einfügen" autocomplete="off" spellcheck="false">
+            <ul class="ac-list" hidden></ul>
+          </div>
+          <div class="coords" id="home-coords"></div>
+        </div>
+        <div class="row"><span></span><button class="btn small" data-here="home">Aktuellen Standort übernehmen</button></div>
+      </div>
+
+      <div class="group" id="grp-work">
+        <div class="row"><label>Name</label><input class="text short" id="work-name" maxlength="24"></div>
+        <div class="row stack">
+          <label>Adresse oder Koordinaten</label>
+          <div class="ac">
+            <input class="text" id="work-addr" placeholder="Adresse suchen oder Koordinaten einfügen" autocomplete="off" spellcheck="false">
+            <ul class="ac-list" hidden></ul>
+          </div>
+          <div class="coords" id="work-coords"></div>
+        </div>
+        <div class="row"><span></span><button class="btn small" data-here="work">Aktuellen Standort übernehmen</button></div>
+      </div>
+
+      <h2>Richtung und Standort</h2>
+      <div class="group">
+        <div class="row">
+          <div><label>Aktuellen Standort verwenden</label><div class="sub" id="loc-state">Aus: Fahrzeit immer zwischen den beiden Adressen</div></div>
+          <input type="checkbox" class="switch" id="use-location">
+        </div>
+        <div class="row">
+          <div><label>Richtungswechsel um</label><div class="sub">Davor zur Firma, danach nach Hause</div></div>
+          <input type="time" class="text time" id="switch-time">
+        </div>
+        <div class="row">
+          <div><label>Umkreis „angekommen“</label><div class="sub">Innerhalb davon gilt der Standort als Zuhause bzw. Firma</div></div>
+          <div class="num"><input type="number" class="text n" id="radius" min="50" max="20000" step="50"><span>m</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ampel -->
+    <section class="page" id="page-ampel">
+      <div class="group">
+        <div class="row">
+          <label>Schwellen beziehen sich auf</label>
+          <div class="seg" id="seg-basis">
+            <button data-v="total">Gesamtfahrzeit</button>
+            <button data-v="delay">Verzögerung</button>
+          </div>
+        </div>
+      </div>
+      <p class="foot" id="basis-hint"></p>
+
+      <div class="group">
+        <div class="row">
+          <div class="lbl-dot"><span class="d green"></span><label>Grün bis</label></div>
+          <div class="num"><input type="number" class="text n" id="t-green" min="0" max="600"><span>min</span></div>
+        </div>
+        <div class="row">
+          <div class="lbl-dot"><span class="d yellow"></span><label>Gelb bis</label></div>
+          <div class="num"><input type="number" class="text n" id="t-yellow" min="0" max="600"><span>min</span></div>
+        </div>
+        <div class="row">
+          <div class="lbl-dot"><span class="d red"></span><label>Rot</label></div>
+          <span class="val" id="t-red"></span>
+        </div>
+      </div>
+
+      <div class="scale" id="scale">
+        <div class="bar"><span class="seg-g"></span><span class="seg-y"></span><span class="seg-r"></span><i id="marker"></i></div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <p class="foot center" id="preview"></p>
+    </section>
+
+    <!-- Aktualisierung -->
+    <section class="page" id="page-refresh">
+      <div class="group">
+        <div class="row">
+          <label>Intervall</label>
+          <div class="num"><span>alle</span><input type="number" class="text n" id="interval" min="1" max="120"><span>min</span></div>
+        </div>
+        <div class="row">
+          <div><label>Immer aktiv</label><div class="sub">Ohne Zeitfenster, rund um die Uhr</div></div>
+          <input type="checkbox" class="switch" id="always-active">
+        </div>
+      </div>
+
+      <h2>Zeitfenster</h2>
+      <div class="group" id="schedule"></div>
+      <p class="foot">Außerhalb des Zeitfensters und bei gesperrtem Bildschirm wird nicht abgefragt. „Jetzt aktualisieren“ geht immer.</p>
+
+      <h2>Kosten</h2>
+      <div class="group">
+        <div class="row"><label>Hochgerechnet pro Monat</label><span class="val" id="projection"></span></div>
+        <div class="row">
+          <div><label>Freikontingent Routes API</label><div class="sub">Laut aktueller Google-Preisliste prüfen und hier eintragen</div></div>
+          <div class="num"><input type="number" class="text n wide" id="quota" min="0" step="100"><span>/ Monat</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Allgemein -->
+    <section class="page" id="page-general">
+      <div class="group">
+        <div class="row">
+          <label>Erscheinungsbild</label>
+          <div class="seg" id="seg-appearance">
+            <button data-v="system">Automatisch</button>
+            <button data-v="light">Hell</button>
+            <button data-v="dark">Dunkel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="row"><label>Mini-Ampel zeigen</label><input type="checkbox" class="switch" id="show-mini"></div>
+        <div class="row"><div><label>Fahrzeit zeigen</label><div class="sub">Minuten und Verzögerung neben der Ampel</div></div><input type="checkbox" class="switch" id="show-duration"></div>
+        <div class="row"><div><label>Ankunftszeit zeigen</label><div class="sub">Bei Abfahrt jetzt. Beides aus: nur die Ampel</div></div><input type="checkbox" class="switch" id="show-arrival"></div>
+        <div class="row">
+          <label for="pill-scale">Größe der Mini-Ampel</label>
+          <div class="num"><span class="tiny">A</span><input type="range" class="slider" id="pill-scale" min="80" max="200" step="10"><span class="big">A</span><span class="val pct" id="pill-scale-val"></span></div>
+        </div>
+        <div class="row">
+          <label for="pill-opacity">Deckkraft der Mini-Ampel</label>
+          <div class="num"><span class="faint">●</span><input type="range" class="slider" id="pill-opacity" min="30" max="100" step="5"><span class="big">●</span><span class="val pct" id="pill-opacity-val"></span></div>
+        </div>
+        <div class="row"><label>Immer im Vordergrund</label><input type="checkbox" class="switch" id="on-top"></div>
+        <div class="row"><label>Beim Anmelden starten</label><input type="checkbox" class="switch" id="autostart"></div>
+      </div>
+
+      <h2>Google</h2>
+      <div class="group">
+        <div class="row stack">
+          <label>API-Key</label>
+          <div class="keyrow">
+            <input type="password" class="text" id="api-key" placeholder="AIza…" autocomplete="off" spellcheck="false">
+            <button class="btn small" id="btn-key">Sichern</button>
+          </div>
+          <div class="sub" id="key-state"></div>
+        </div>
+      </div>
+      <p class="foot">Der Key liegt im macOS-Schlüsselbund, nicht in einer Datei.</p>
+
+      <details class="guide" id="guide">
+        <summary>So legst du den API-Key bei Google an <span class="sub">rund 10 Minuten</span></summary>
+        <div class="guide-body">
+          <p>Du brauchst ein Google-Konto und eine Kreditkarte. Roadrunner nutzt zwei Google-Dienste: die <b>Routes API</b> für die Fahrzeit mit Verkehr und die <b>Places API (New)</b> für die Adresssuche. Google schenkt dir jeden Monat 5.000 Fahrzeit-Abfragen. Mit den Standardeinstellungen braucht Roadrunner rund 3.650, kostet also nichts. Darüber verlangt Google 10,00 USD je 1.000 Abfragen.</p>
+          <ol>
+            <li>
+              <b>Projekt anlegen.</b> Name zum Beispiel „Roadrunner“, dann „Erstellen“. Danach oben links prüfen, dass dieses Projekt ausgewählt ist.
+              <a class="go" data-url="https://console.cloud.google.com/projectcreate">Öffnen</a>
+            </li>
+            <li>
+              <b>Abrechnungskonto verknüpfen.</b> Kreditkarte hinterlegen. Ohne Abrechnungskonto liefert Google auch die Gratis-Abfragen nicht.
+              <a class="go" data-url="https://console.cloud.google.com/billing/linkedaccount">Öffnen</a>
+            </li>
+            <li>
+              <b>Routes API aktivieren.</b> „Diese API aktivieren“ klicken. Beim ersten Mal fragt Google nach den Nutzungsbedingungen für den EWR: ins Feld „Bestätigen“ tippen, dann „Akzeptieren und weiter“.
+              <a class="go" data-url="https://console.cloud.google.com/apis/library/routes.googleapis.com">Öffnen</a>
+            </li>
+            <li>
+              <b>Places API (New) aktivieren.</b> Achtung, nicht die alte „Places API“ ohne den Zusatz „(New)“.
+              <a class="go" data-url="https://console.cloud.google.com/apis/library/places.googleapis.com">Öffnen</a>
+            </li>
+            <li>
+              <b>Key anlegen und einschränken.</b> Meist hat Google beim Aktivieren schon einen „Maps Platform API Key“ angelegt, sonst „Anmeldedaten erstellen“ → „API-Schlüssel“. Den Key anklicken, unter „API-Einschränkungen“ nur <b>Routes API</b> und <b>Places API (New)</b> auswählen, „Anwendungseinschränkungen“ auf „Keine“ lassen, „Speichern“.
+              <a class="go" data-url="https://console.cloud.google.com/apis/credentials">Öffnen</a>
+            </li>
+            <li>
+              <b>Kostenbremse (empfohlen).</b> Kontingente der Routes API, Zeile „Directions - ComputeRoutes per request quota per day“ → „Kontingent bearbeiten“, „Unlimited“ abwählen, 200 eintragen, „Anfrage senden“. Mehr als 200 Abfragen am Tag lässt Google dann nicht zu.
+              <a class="go" data-url="https://console.cloud.google.com/google/maps-apis/quotas?api=routes.googleapis.com">Öffnen</a>
+            </li>
+            <li>
+              <b>Key übernehmen.</b> Bei den Anmeldedaten „Schlüssel anzeigen“, kopieren, oben einfügen und „Sichern“. Fragt macOS nach dem Schlüsselbund: „Immer erlauben“.
+            </li>
+          </ol>
+
+          <h3>Oder einen Claude-Assistenten machen lassen</h3>
+          <p>Ein Claude mit Browsersteuerung (z.B. Claude in Chrome oder Claude Code mit Browser) kann die Schritte 1 bis 6 für dich erledigen. Auftrag kopieren und ihm geben. Kreditkarte, Nutzungsbedingungen und das Kopieren des Keys bleiben bewusst bei dir.</p>
+          <pre class="prompt" id="claude-prompt">Richte mir in der Google Cloud Console einen API-Key für die Mac-App „Roadrunner“ ein. Ich bin im Browser bei Google angemeldet. Die App berechnet Fahrzeiten mit Verkehr (Google Routes API, computeRoutes mit TRAFFIC_AWARE) und sucht Adressen (Places API (New), Autocomplete und Place Details).
+
+Schritte:
+1. Projekt „Roadrunner“ anlegen (console.cloud.google.com/projectcreate) oder ein vorhandenes gleichnamiges Projekt auswählen. Arbeite danach ausschließlich in diesem Projekt.
+2. Prüfen, ob ein Abrechnungskonto verknüpft ist. Wenn nicht: zur Verknüpfungsseite führen und mich die Zahlungsdaten selbst eingeben lassen.
+3. Routes API aktivieren (routes.googleapis.com).
+4. Places API (New) aktivieren (places.googleapis.com), nicht die alte Places API.
+5. Unter APIs und Dienste → Anmeldedaten einen API-Key verwenden (der automatisch angelegte „Maps Platform API Key“ ist in Ordnung, sonst einen neuen anlegen). Umbenennen in „Roadrunner (Routes + Places)“. API-Einschränkungen: ausschließlich Routes API und Places API (New). Anwendungseinschränkungen: Keine. Speichern und in der Liste prüfen, dass „2 APIs“ dasteht.
+6. Kostenbremse: In den Kontingenten der Routes API „Directions - ComputeRoutes per request quota per day“ von „Unbegrenzt“ auf 200 setzen und die Rückfrage bestätigen. Danach den Wert in der Liste gegenprüfen.
+
+Harte Regeln:
+- Gib keine Kreditkarten- oder Zahlungsdaten ein.
+- Akzeptiere keine Nutzungsbedingungen für mich (z.B. den EWR-Dialog beim Aktivieren). Halte an, sag mir, was ich tippen und klicken muss, und mach danach weiter.
+- Lies den API-Key nicht aus und schreib ihn nirgends hin. Sag mir am Ende nur, wo ich auf „Schlüssel anzeigen“ klicke, damit ich ihn selbst kopiere.
+- Lösche nichts und ändere nichts an anderen Projekten.
+
+Zum Schluss: kurze Zusammenfassung, was du eingerichtet hast und was davon geprüft ist.</pre>
+          <button class="btn small" id="btn-copy-prompt">Auftrag kopieren</button>
+        </div>
+      </details>
+    </section>
+
+    <div class="toast" id="toast" hidden></div>
+  </main>
+
+  <script src="settings.js"></script>
+</body>
+</html>

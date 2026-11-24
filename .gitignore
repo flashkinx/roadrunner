@@ -1,0 +1,6 @@
+# Build
+src-tauri/target/
+src-tauri/gen/
+# Lokale Cargo-Einstellungen (z.B. eigenes target-dir)
+.cargo/
+.DS_Store

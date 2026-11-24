@@ -1,0 +1,122 @@
+/* Ampel-Pille, kompakt (100 x 30). Liegt auf dem Popover-Glas des Fensters, das
+   hell oder dunkel ist, je nach Einstellung "Erscheinungsbild". */
+:root {
+  color-scheme: light dark;
+  --green: #34c759;
+  --yellow: #ffcc00;
+  --red: #ff3b30;
+  --grey: #8e8e93;
+  --text: rgba(0, 0, 0, 0.88);
+  --text-2: rgba(0, 0, 0, 0.5);
+  --ring: rgba(0, 0, 0, 0.12);
+  /* Schrift im Verzoegerungs-Badge: dunklere Toene, Gelb waere auf hellem Glas unlesbar */
+  --t-green: #248a3d;
+  --t-yellow: #9a7100;
+  --t-red: #d70015;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --green: #30d158;
+    --yellow: #ffd60a;
+    --red: #ff453a;
+    --text: rgba(255, 255, 255, 0.96);
+    --text-2: rgba(255, 255, 255, 0.58);
+    --ring: rgba(255, 255, 255, 0.16);
+    --t-green: #30d158;
+    --t-yellow: #ffd60a;
+    --t-red: #ff453a;
+  }
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pill {
+  --c: var(--grey);
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px 0 9px;
+  border-radius: 15px;
+  box-shadow: inset 0 0 0 0.5px var(--ring);
+  color: var(--text);
+  white-space: nowrap;
+}
+.pill[data-color="green"]  { --c: var(--green); --tc: var(--t-green); }
+.pill[data-color="yellow"] { --c: var(--yellow); --tc: var(--t-yellow); }
+.pill[data-color="red"]    { --c: var(--red); --tc: var(--t-red); }
+
+.dot {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.55), transparent 45%),
+    var(--c);
+  box-shadow: 0 0 7px 0.5px color-mix(in srgb, var(--c) 70%, transparent),
+              inset 0 -1px 2px rgba(0, 0, 0, 0.25);
+  transition: background-color .4s ease, box-shadow .4s ease;
+}
+.pill[data-kind="loading"] .dot { animation: pulse 1.4s ease-in-out infinite; }
+.pill[data-color="grey"] .dot { box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.25); }
+
+@keyframes pulse { 50% { opacity: .35; } }
+
+.min {
+  font-family: "SF Pro Rounded", -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.unit { font-size: 9px; font-weight: 500; color: var(--text-2); align-self: flex-end; margin-bottom: 9px; }
+.delta {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--tc, var(--c));
+  background: color-mix(in srgb, var(--c) 18%, transparent);
+}
+.delta:empty { display: none; }
+
+.pill[data-kind="paused"] .min,
+.pill[data-kind="stale"] .min { opacity: .55; }
+
+/* Anzeigemodi: Ampel immer, Fahrzeit (mit Verzögerung) und Ankunftszeit wahlweise */
+.dur, .arr { display: inline-flex; align-items: baseline; gap: 2px; }
+.arr .unit { align-self: auto; margin: 0 2px 0 0; }
+.clock {
+  font-family: "SF Pro Rounded", -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+body[data-dur="0"] .dur, body[data-dur="0"] .delta { display: none; }
+body[data-arr="0"] .arr { display: none; }
+/* Fahrzeit und Ankunft: Verzögerung direkt hinter den Minuten, Ankunft rechts */
+body[data-dur="1"][data-arr="1"] .delta { margin-left: 4px; }
+body[data-dur="1"][data-arr="1"] .arr { margin-left: auto; }
+/* Nur Ampel: runder Punkt in der Mitte */
+body[data-dur="0"][data-arr="0"] .pill { padding: 0; justify-content: center; }
+body[data-dur="0"][data-arr="0"] .dot { width: 14px; height: 14px; margin: 0; }
+.pill[data-kind="paused"] .clock,
+.pill[data-kind="stale"] .clock { opacity: .55; }
+.dur .unit { align-self: auto; margin: 0; }
