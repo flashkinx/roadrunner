@@ -41,6 +41,8 @@ thresholds.
 
 ## Screenshots
 
+### macOS
+
 | | |
 |---|---|
 | <img src="docs/screenshots/settings-route.png" width="420"><br>**Route** (Route): home and work address with Google autocomplete or pasted coordinates, location, direction switch time | <img src="docs/screenshots/settings-ampel.png" width="420"><br>**Traffic light** (Ampel): two thresholds, based on total time or traffic delay |
@@ -57,6 +59,23 @@ Pill variants (traffic light only, drive time, arrival time, both):
   <img src="docs/screenshots/pill-arrival.png">
   &nbsp;
   <img src="docs/screenshots/pill-full-dark.png">
+</p>
+
+### Windows 11
+
+Same app, native Windows 11 look (Segoe UI, Mica, Fluent controls). Overview, General, pill in light and dark, right-click menu:
+
+| | |
+|---|---|
+| <img src="docs/screenshots/win-settings-status.png" width="420"> | <img src="docs/screenshots/win-settings-general.png" width="420"> |
+| <img src="docs/screenshots/win-settings-route.png" width="420"> | <img src="docs/screenshots/win-settings-refresh.png" width="420"> |
+
+<p>
+  <img src="docs/screenshots/win-pill-light.png" width="231">
+  &nbsp;
+  <img src="docs/screenshots/win-pill-dark.png" width="231">
+  &nbsp;
+  <img src="docs/screenshots/win-menu.png" width="260" align="top">
 </p>
 
 ## Requirements

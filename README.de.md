@@ -38,6 +38,8 @@ mit selbst gesetzten Schwellen.
 
 ## Screenshots
 
+### macOS
+
 | | |
 |---|---|
 | <img src="docs/screenshots/settings-route.png" width="420"><br>**Route:** Adressen mit Google-Vorschlägen oder eingefügten Koordinaten, Standort, Richtungswechsel | <img src="docs/screenshots/settings-ampel.png" width="420"><br>**Ampel:** zwei Schwellen, Bezug Gesamtfahrzeit oder Verzögerung |
@@ -54,6 +56,23 @@ Varianten der Pille (nur Ampel, Fahrzeit, Ankunftszeit, beides):
   <img src="docs/screenshots/pill-arrival.png">
   &nbsp;
   <img src="docs/screenshots/pill-full-dark.png">
+</p>
+
+### Windows 11
+
+Dieselbe App im Windows-11-Stil (Segoe UI, Mica, Fluent-Bedienelemente). Übersicht, Allgemein, Pille hell und dunkel, Rechtsklick-Menü:
+
+| | |
+|---|---|
+| <img src="docs/screenshots/win-settings-status.png" width="420"> | <img src="docs/screenshots/win-settings-general.png" width="420"> |
+| <img src="docs/screenshots/win-settings-route.png" width="420"> | <img src="docs/screenshots/win-settings-refresh.png" width="420"> |
+
+<p>
+  <img src="docs/screenshots/win-pill-light.png" width="231">
+  &nbsp;
+  <img src="docs/screenshots/win-pill-dark.png" width="231">
+  &nbsp;
+  <img src="docs/screenshots/win-menu.png" width="260" align="top">
 </p>
 
 ## Voraussetzungen
